@@ -18,18 +18,24 @@ extern NSString *IFTweetLabelURLNotification;
 // Instead, a normal view is used and an UILabel methods are supported through forward
 // invocation.
 
+@class IFTweetRegExpHelper;
 @interface IFTweetLabel : UIView 
 {
+    UIFont *linkFont;
+    
 	UIColor *normalColor;
 	UIColor *highlightColor;
 
 	UIImage *normalImage;
 	UIImage *highlightImage;
-
+    
 	UILabel *label;
 	
 	BOOL linksEnabled;
+    
+    IFTweetRegExpHelper *regExpHelper;    
 }
+@property (nonatomic, retain) UIFont *linkFont;
 
 @property (nonatomic, retain) UIColor *normalColor;
 @property (nonatomic, retain) UIColor *highlightColor;
@@ -41,8 +47,15 @@ extern NSString *IFTweetLabelURLNotification;
 
 @property (nonatomic, assign) BOOL linksEnabled;
 
+@property (nonatomic, retain) IFTweetRegExpHelper *regExpHelper;
+
 - (void)setBackgroundColor:(UIColor *)backgroundColor;
 - (void)setFrame:(CGRect)frame;
+
+// Create your own links.
+- (void)addLink:(NSString*)link;
+- (void)addLinks:(NSArray*)links;
+- (void)clearLinks;
 
 @end
 
@@ -53,5 +66,19 @@ extern NSString *IFTweetLabelURLNotification;
 @property(nonatomic) NSInteger numberOfLines;
 @property(nonatomic, retain) UIColor *textColor;
 @property(nonatomic, retain) UIFont *font;
+
+@end
+
+@interface IFTweetRegExpHelper : NSObject
+{
+    NSMutableArray *expressions;
+}
+
+@property (nonatomic, retain) NSMutableArray *expressions;
+
+// Create your own links.
+- (void)addLink:(NSString*)link;
+- (void)addLinks:(NSArray*)links;
+- (void)clearLinks;
 
 @end

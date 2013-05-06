@@ -15,6 +15,10 @@
 
 @implementation IFTweetLabel
 
+@synthesize regExpHelper;
+
+@synthesize linkFont;
+
 @synthesize normalColor;
 @synthesize highlightColor;
 
@@ -25,22 +29,21 @@
 
 @synthesize linksEnabled;
 
-
 NSString *IFTweetLabelURLNotification = @"IFTweetLabelURLNotification";
 
-
-static NSArray *expressions = nil;
-
-+ (void)initialize
+- (void)addLink:(NSString*)link
 {
-	// setup regular expressions that define where buttons will be created
-	expressions = [[NSArray alloc] initWithObjects:
-                   @"(\\+)?([0-9]{8,}+)", // phone numbers, 8 or more
-                   @"(@[a-zA-Z0-9_]+)", // screen names
-                   @"(#[a-zA-Z0-9_-]+)", // hash tags
-                   @"([hH][tT][tT][pP][sS]?:\\/\\/[^ ,'\">\\]\\)]*[^\\. ,'\">\\]\\)])", // hyperlinks with http://
-                   @"[wW][wW][wW].([a-z]|[A-Z]|[0-9]|[/.]|[~])*", // hyperlinks like www.something.tld
-                   nil];
+    [regExpHelper addLink:link];
+}
+
+- (void)addLinks:(NSArray*)links
+{
+    [regExpHelper addLinks:links];
+}
+
+- (void)clearLinks
+{
+    [regExpHelper clearLinks];
 }
 
 - (void)handleButton:(id)sender
@@ -54,7 +57,7 @@ static NSArray *expressions = nil;
 	// This code collects all possible links in the current label text and gets a full match that can be passed
 	// with the notification.
 	
-	for (NSString *expression in expressions)
+	for (NSString *expression in regExpHelper.expressions)
 	{
 		NSString *match;
 		NSEnumerator *enumerator = [text matchEnumeratorWithRegex:expression];
@@ -70,27 +73,22 @@ static NSArray *expressions = nil;
 
 - (void)createButtonWithText:(NSString *)text withFrame:(CGRect)frame
 {
-	UIButton *button = nil;
+	UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom]; // autoreleased
 	if (self.normalImage && self.highlightImage)
 	{
-		button = [UIButton buttonWithType:UIButtonTypeCustom]; // autoreleased
 		[button setBackgroundImage:self.normalImage forState:UIControlStateNormal];
 		[button setBackgroundImage:self.highlightImage forState:UIControlStateHighlighted];
 	}
-	else
-	{
-		button = [UIButton buttonWithType:UIButtonTypeRoundedRect]; // autoreleased
-	}
+    
 	[button setFrame:frame];
-	[button.titleLabel setFont:self.label.font];
+	[button.titleLabel setFont:linkFont==nil?self.label.font:linkFont];
 	[button setTitle:text forState:UIControlStateNormal];
 	[button.titleLabel setLineBreakMode:[self.label lineBreakMode]];
 	[button setTitleColor:self.normalColor forState:UIControlStateNormal];
 	[button setTitleColor:self.highlightColor forState:UIControlStateHighlighted];
 	[button addTarget:self action:@selector(handleButton:) forControlEvents:UIControlEventTouchUpInside];
 	[self addSubview:button];
-}				
-
+}
 
 - (void)createButtonsWithText:(NSString *)text atPoint:(CGPoint)point
 {
@@ -104,7 +102,7 @@ static NSArray *expressions = nil;
     NSInteger parsedRangesLength = 0;
     
     // take each of the regular expressions that we defined and try to match it within the text
-	for (NSString *expression in expressions)
+	for (NSString *expression in regExpHelper.expressions)
 	{
 		NSString *match;
 		NSEnumerator *enumerator = [text matchEnumeratorWithRegex:expression];
@@ -362,6 +360,8 @@ static NSArray *expressions = nil;
 {
     self.clipsToBounds = YES;
     
+    self.linkFont = nil;
+    
     self.normalColor = [UIColor blueColor];
     self.highlightColor = [UIColor redColor];
     
@@ -372,6 +372,8 @@ static NSArray *expressions = nil;
     [self addSubview:self.label];
     
     self.linksEnabled = NO;
+    
+    regExpHelper = [[IFTweetRegExpHelper alloc] init];
 }
 
 - (id)initWithFrame:(CGRect)frame
@@ -396,12 +398,16 @@ static NSArray *expressions = nil;
 
 - (void)dealloc
 {
+    self.linkFont = nil;
+    
 	self.normalColor = nil;
 	self.highlightColor = nil;
 
 	self.normalImage = nil;
 	self.highlightImage = nil;
 	
+    self.regExpHelper = nil;
+    
 	[self removeButtons];
 	
 	[super dealloc];
@@ -514,6 +520,52 @@ static NSArray *expressions = nil;
 	//NSLog(@"respondsToSelector: selector = %@", NSStringFromSelector(aSelector));
 	
 	return [super respondsToSelector:aSelector] || [self.label respondsToSelector:aSelector];
+}
+
+@end
+    
+@implementation IFTweetRegExpHelper
+@synthesize expressions;
+
+static NSArray *staticExpressions;
+
++ (void)initialize
+{
+	// setup regular expressions that define where buttons will be created
+	staticExpressions = [[NSArray alloc] initWithObjects:
+                         @"(\\+)?([0-9]{8,}+)", // phone numbers, 8 or more
+                         @"(@[a-zA-Z0-9_]+)", // screen names
+                         @"(#[a-zA-Z0-9_-]+)", // hash tags
+                         @"([hH][tT][tT][pP][sS]?:\\/\\/[^ ,'\">\\]\\)]*[^\\. ,'\">\\]\\)])", // hyperlinks with http://
+                         @"[wW][wW][wW].([a-z]|[A-Z]|[0-9]|[/.]|[~])*", // hyperlinks like www.something.tld
+                         nil];
+}
+
+- (id)init
+{
+    self = [super init];
+    if (self)
+    {
+        expressions = [[NSMutableArray alloc] init];
+        [expressions addObjectsFromArray:staticExpressions];
+    }
+    return self;
+}
+
+- (void)addLink:(NSString*)link
+{
+    [expressions addObject:[NSString stringWithFormat:@"(/\\s+%@\\s+/i)",link]];
+}
+
+- (void)addLinks:(NSArray*)links
+{
+    for (NSString *link in links) [self addLink:link];
+}
+
+- (void)clearLinks
+{
+    [expressions removeAllObjects];
+    [expressions addObjectsFromArray:staticExpressions];
 }
 
 @end
