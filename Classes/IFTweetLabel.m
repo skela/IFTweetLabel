@@ -358,23 +358,37 @@ static NSArray *expressions = nil;
 	}
 }
 
+- (void)commonInit
+{
+    self.clipsToBounds = YES;
+    
+    self.normalColor = [UIColor blueColor];
+    self.highlightColor = [UIColor redColor];
+    
+    self.normalImage = nil;
+    self.highlightImage = nil;
+	
+    self.label = [[[UILabel alloc] initWithFrame:CGRectMake(0.0f, 0.0f, self.frame.size.width, self.frame.size.height)] autorelease];
+    [self addSubview:self.label];
+    
+    self.linksEnabled = NO;
+}
 
 - (id)initWithFrame:(CGRect)frame
 {
     if (self = [super initWithFrame:frame])
 	{
-		self.clipsToBounds = YES;
-		
-		self.normalColor = [UIColor blueColor];
-		self.highlightColor = [UIColor redColor];
-		
-		self.normalImage = nil;
-		self.highlightImage = nil;
+		[self commonInit];
+    }
 	
-		self.label = [[[UILabel alloc] initWithFrame:CGRectMake(0.0f, 0.0f, frame.size.width, frame.size.height)] autorelease];
-		[self addSubview:self.label];
+    return self;
+}
 
-		self.linksEnabled = NO;
+- (id)initWithCoder:(NSCoder*)aDecoder
+{
+    if (self = [super initWithCoder:aDecoder])
+	{
+		[self commonInit];
     }
 	
     return self;
