@@ -18,10 +18,16 @@ extern NSString *IFTweetLabelURLNotification;
 // Instead, a normal view is used and an UILabel methods are supported through forward
 // invocation.
 
+@class IFTweetLabel;
+@protocol IFTweetLabelDelegate <NSObject>
+- (void)label:(IFTweetLabel*)label selectedMatchingText:(NSString *)text;
+@end
+
 @class IFTweetRegExpHelper;
 @interface IFTweetLabel : UIView 
 {
     UIFont *linkFont;
+    UIColor *linkBackgroundColor;
     
 	UIColor *normalColor;
 	UIColor *highlightColor;
@@ -33,9 +39,11 @@ extern NSString *IFTweetLabelURLNotification;
 	
 	BOOL linksEnabled;
     
-    IFTweetRegExpHelper *regExpHelper;    
+    IFTweetRegExpHelper *regExpHelper;
+    id<IFTweetLabelDelegate>delegate;
 }
 @property (nonatomic, retain) UIFont *linkFont;
+@property (nonatomic, retain) UIColor *linkBackgroundColor;
 
 @property (nonatomic, retain) UIColor *normalColor;
 @property (nonatomic, retain) UIColor *highlightColor;
@@ -48,6 +56,7 @@ extern NSString *IFTweetLabelURLNotification;
 @property (nonatomic, assign) BOOL linksEnabled;
 
 @property (nonatomic, retain) IFTweetRegExpHelper *regExpHelper;
+@property (nonatomic, assign) id<IFTweetLabelDelegate>delegate;
 
 - (void)setBackgroundColor:(UIColor *)backgroundColor;
 - (void)setFrame:(CGRect)frame;

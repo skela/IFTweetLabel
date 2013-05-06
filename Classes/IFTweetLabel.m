@@ -15,9 +15,12 @@
 
 @implementation IFTweetLabel
 
+@synthesize delegate;
+
 @synthesize regExpHelper;
 
 @synthesize linkFont;
+@synthesize linkBackgroundColor;
 
 @synthesize normalColor;
 @synthesize highlightColor;
@@ -66,6 +69,7 @@ NSString *IFTweetLabelURLNotification = @"IFTweetLabelURLNotification";
 			if ([match hasPrefix:buttonTitle])
 			{
 				[[NSNotificationCenter defaultCenter] postNotificationName:IFTweetLabelURLNotification object:match];
+                if (delegate!=nil) [delegate label:self selectedMatchingText:match];
 			}
 		}
 	}
@@ -79,7 +83,10 @@ NSString *IFTweetLabelURLNotification = @"IFTweetLabelURLNotification";
 		[button setBackgroundImage:self.normalImage forState:UIControlStateNormal];
 		[button setBackgroundImage:self.highlightImage forState:UIControlStateHighlighted];
 	}
-    
+    else
+    {
+        if (linkBackgroundColor!=nil) [button setBackgroundColor:linkBackgroundColor];
+    }
 	[button setFrame:frame];
 	[button.titleLabel setFont:linkFont==nil?self.label.font:linkFont];
 	[button setTitle:text forState:UIControlStateNormal];
@@ -87,6 +94,13 @@ NSString *IFTweetLabelURLNotification = @"IFTweetLabelURLNotification";
 	[button setTitleColor:self.normalColor forState:UIControlStateNormal];
 	[button setTitleColor:self.highlightColor forState:UIControlStateHighlighted];
 	[button addTarget:self action:@selector(handleButton:) forControlEvents:UIControlEventTouchUpInside];
+    //[button sizeToFit];
+    CGRect f = button.frame;
+    f.size.width=f.size.width-1;
+    if (f.origin.x==-3)
+        f.origin.x=-2;
+    button.frame=f;
+    
 	[self addSubview:button];
 }
 
@@ -398,7 +412,10 @@ NSString *IFTweetLabelURLNotification = @"IFTweetLabelURLNotification";
 
 - (void)dealloc
 {
+    self.delegate = nil;
+    
     self.linkFont = nil;
+    self.linkBackgroundColor = nil;
     
 	self.normalColor = nil;
 	self.highlightColor = nil;
@@ -554,7 +571,8 @@ static NSArray *staticExpressions;
 
 - (void)addLink:(NSString*)link
 {
-    [expressions addObject:[NSString stringWithFormat:@"(/\\s+%@\\s+/i)",link]];
+    NSString *str = [NSString stringWithFormat:@"\\b%@\\b",link];
+    [expressions addObject:str];
 }
 
 - (void)addLinks:(NSArray*)links
